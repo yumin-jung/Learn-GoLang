@@ -1,13 +1,19 @@
 package main
 
 import (
-	"errors"
 	"fmt"
 	"net/http"
 )
 
+type reqRes struct {
+	url    string
+	status string
+}
+
 func main() {
-	var results = make(map[string]string)
+	results := make(map[string]string)
+
+	c := make(chan reqRes)
 
 	urls := []string{
 		"https://www.airbnb.com/",
@@ -21,26 +27,24 @@ func main() {
 	}
 
 	for _, url := range urls {
-		result := "SUCCEED"
-		err := hitURL(url)
-		if err != nil {
-			result = "FAIL"
-		}
-		results[url] = result
+		go hitURL(url, c)
 	}
 
-	for url, res := range results {
-		fmt.Println(res, url)
+	for i := 0; i < len(urls); i++ {
+		result := <-c
+		results[result.url] = result.status
+	}
+
+	for url, status := range results {
+		fmt.Println(url, status)
 	}
 }
 
-var errReqFailed = errors.New("Request failed")
-
-func hitURL(url string) error {
-	res, err := http.Get(url)
-
-	if err != nil || res.StatusCode >= 400 {
-		return errReqFailed
+func hitURL(url string, c chan<- reqRes) {
+	resp, err := http.Get(url)
+	if err != nil || resp.StatusCode >= 400 {
+		c <- reqRes{url: url, status: "FAILED"}
+	} else {
+		c <- reqRes{url: url, status: "SUCCEED"}
 	}
-	return nil
 }
