@@ -1,32 +1,46 @@
 package main
 
 import (
+	"errors"
 	"fmt"
-
-	"github.com/yumin-jung/Learn-GoLang/mydict"
+	"net/http"
 )
 
 func main() {
-	// Accounts
+	var results = make(map[string]string)
 
-	// account := accounts.NewAccount("yumin")
-	// account.Deposit(10)
-	// errWithdraw := account.Withdraw(5)
-	// if errWithdraw != nil {
-	// 	fmt.Println(errWithdraw)
-	// }
-	// fmt.Println(account)
-
-	// Dict
-	dictionary := mydict.Dictionary{}
-	baseWord := "hello"
-	dictionary.Add(baseWord, "first")
-	dictionary.Search(baseWord)
-	dictionary.Delete(baseWord)
-	word, err := dictionary.Search(baseWord)
-	if err != nil {
-		fmt.Println(err)
-	} else {
-		fmt.Println(word)
+	urls := []string{
+		"https://www.airbnb.com/",
+		"https://www.google.com/",
+		"https://www.amazon.com/",
+		"https://www.reddit.com/",
+		"https://www.google.com/",
+		"https://soundcloud.com/",
+		"https://www.facebook.com/",
+		"https://www.instagram.com/",
 	}
+
+	for _, url := range urls {
+		result := "SUCCEED"
+		err := hitURL(url)
+		if err != nil {
+			result = "FAIL"
+		}
+		results[url] = result
+	}
+
+	for url, res := range results {
+		fmt.Println(res, url)
+	}
+}
+
+var errReqFailed = errors.New("Request failed")
+
+func hitURL(url string) error {
+	res, err := http.Get(url)
+
+	if err != nil || res.StatusCode >= 400 {
+		return errReqFailed
+	}
+	return nil
 }
